@@ -5,4 +5,5 @@ Export-Package: \
 	zipkin,\
 	zipkin.collector,\
 	zipkin.internal,\
+	zipkin.simplespan,\
 	zipkin.storage

@@ -41,6 +41,8 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import zipkin.Codec;
 import zipkin.Endpoint;
 import zipkin.Span;
+import zipkin.simplespan.SimpleSpan;
+import zipkin.simplespan.SimpleSpanCodec;
 
 /**
  * This compares the speed of the bundled java codec with the approach used in the scala
@@ -152,6 +154,31 @@ public class CodecBenchmarks {
   @Benchmark
   public byte[] writeClientSpan_thrift_libthrift() throws TException {
     return serialize(clientSpanLibThrift);
+  }
+
+  static final byte[] simpleSpanJson = read("/span-simple.json");
+  static final SimpleSpan simpleSpan = SimpleSpanCodec.JSON.readSpan(simpleSpanJson);
+  static final List<SimpleSpan> tenSimpleSpans = Collections.nCopies(10, simpleSpan);
+  static final byte[] tenSimpleSpansJson = SimpleSpanCodec.JSON.writeSpans(tenSimpleSpans);
+
+  @Benchmark
+  public SimpleSpan readClientSpan_json_zipkin_simple() {
+    return SimpleSpanCodec.JSON.readSpan(simpleSpanJson);
+  }
+
+  @Benchmark
+  public List<SimpleSpan> readTenClientSpans_json_zipkin_simple() {
+    return SimpleSpanCodec.JSON.readSpans(tenSimpleSpansJson);
+  }
+
+  @Benchmark
+  public byte[] writeClientSpan_json_zipkin_simple() {
+    return SimpleSpanCodec.JSON.writeSpan(simpleSpan);
+  }
+
+  @Benchmark
+  public byte[] writeTenClientSpans_json_zipkin_simple() {
+    return SimpleSpanCodec.JSON.writeSpans(tenSimpleSpans);
   }
 
   static final byte[] rpcSpanJson = read("/span-rpc.json");
