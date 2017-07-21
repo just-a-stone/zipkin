@@ -45,8 +45,8 @@ public class SimpleSpanJsonCodecTest {
     .kind(SimpleSpan.Kind.CLIENT)
     .localEndpoint(frontend)
     .remoteEndpoint(backend)
-    .startTimestamp(1472470996199000L)
-    .finishTimestamp(1472470996199000L + 207000L)
+    .timestamp(1472470996199000L)
+    .duration(207000L)
     .addAnnotation(1472470996238000L, Constants.WIRE_SEND)
     .addAnnotation(1472470996403000L, Constants.WIRE_RECV)
     .putTag(TraceKeys.HTTP_PATH, "/api")
@@ -185,23 +185,23 @@ public class SimpleSpanJsonCodecTest {
     codec.readSpan(json.getBytes(UTF_8));
   }
 
-  @Test public void ignoreNull_startTimestamp() {
+  @Test public void ignoreNull_timestamp() {
     String json = "{\n"
       + "  \"traceId\": \"6b221d5bc9e6496c\",\n"
       + "  \"name\": \"get-traces\",\n"
       + "  \"id\": \"6b221d5bc9e6496c\",\n"
-      + "  \"startTimestamp\": null\n"
+      + "  \"timestamp\": null\n"
       + "}";
 
     codec.readSpan(json.getBytes(UTF_8));
   }
 
-  @Test public void ignoreNull_finishTimestamp() {
+  @Test public void ignoreNull_duration() {
     String json = "{\n"
       + "  \"traceId\": \"6b221d5bc9e6496c\",\n"
       + "  \"name\": \"get-traces\",\n"
       + "  \"id\": \"6b221d5bc9e6496c\",\n"
-      + "  \"finishTimestamp\": null\n"
+      + "  \"duration\": null\n"
       + "}";
 
     codec.readSpan(json.getBytes(UTF_8));

@@ -76,10 +76,10 @@ public final class SimpleSpanJsonCodec implements SimpleSpanCodec {
           builder.kind(SimpleSpan.Kind.valueOf(reader.nextString()));
         } else if (nextName.equals("name") && reader.peek() != JsonToken.NULL) {
           builder.name(reader.nextString());
-        } else if (nextName.equals("startTimestamp") && reader.peek() != JsonToken.NULL) {
-          builder.startTimestamp(reader.nextLong());
-        } else if (nextName.equals("finishTimestamp") && reader.peek() != JsonToken.NULL) {
-          builder.finishTimestamp(reader.nextLong());
+        } else if (nextName.equals("timestamp") && reader.peek() != JsonToken.NULL) {
+          builder.timestamp(reader.nextLong());
+        } else if (nextName.equals("duration") && reader.peek() != JsonToken.NULL) {
+          builder.duration(reader.nextLong());
         } else if (nextName.equals("localEndpoint") && reader.peek() != JsonToken.NULL) {
           builder.localEndpoint(ENDPOINT_READER.fromJson(reader));
         } else if (nextName.equals("remoteEndpoint") && reader.peek() != JsonToken.NULL) {
@@ -148,13 +148,13 @@ public final class SimpleSpanJsonCodec implements SimpleSpanCodec {
         sizeInBytes += asciiSizeInBytes(",\"name\":\"");
         sizeInBytes += jsonEscapedSizeInBytes(value.name()) + 1;
       }
-      if (value.startTimestamp() != null) {
-        sizeInBytes += asciiSizeInBytes(",\"startTimestamp\":");
-        sizeInBytes += asciiSizeInBytes(value.startTimestamp());
+      if (value.timestamp() != null) {
+        sizeInBytes += asciiSizeInBytes(",\"timestamp\":");
+        sizeInBytes += asciiSizeInBytes(value.timestamp());
       }
-      if (value.finishTimestamp() != null) {
-        sizeInBytes += asciiSizeInBytes(",\"finishTimestamp\":");
-        sizeInBytes += asciiSizeInBytes(value.finishTimestamp());
+      if (value.duration() != null) {
+        sizeInBytes += asciiSizeInBytes(",\"duration\":");
+        sizeInBytes += asciiSizeInBytes(value.duration());
       }
       if (value.localEndpoint() != null) {
         sizeInBytes += asciiSizeInBytes(",\"localEndpoint\":");
@@ -204,11 +204,11 @@ public final class SimpleSpanJsonCodec implements SimpleSpanCodec {
       if (value.name() != null) {
         b.writeAscii(",\"name\":\"").writeJsonEscaped(value.name()).writeByte('"');
       }
-      if (value.startTimestamp() != null) {
-        b.writeAscii(",\"startTimestamp\":").writeAscii(value.startTimestamp());
+      if (value.timestamp() != null) {
+        b.writeAscii(",\"timestamp\":").writeAscii(value.timestamp());
       }
-      if (value.finishTimestamp() != null) {
-        b.writeAscii(",\"finishTimestamp\":").writeAscii(value.finishTimestamp());
+      if (value.duration() != null) {
+        b.writeAscii(",\"duration\":").writeAscii(value.duration());
       }
       if (value.localEndpoint() != null) {
         b.writeAscii(",\"localEndpoint\":");

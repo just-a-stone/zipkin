@@ -25,6 +25,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import zipkin.Annotation;
+import zipkin.Constants;
 import zipkin.Endpoint;
 import zipkin.Span;
 import zipkin.TraceKeys;
@@ -93,23 +94,29 @@ public abstract class SimpleSpan implements Serializable { // for Spark jobs
    * <li>Data about a completed span (ex tags) were sent after the fact</li>
    * </pre><ul>
    *
-   * @see #finishTimestamp()
+   * @see #duration()
    */
-  @Nullable public abstract Long startTimestamp();
+  @Nullable public abstract Long timestamp();
 
   /**
-   * Epoch microseconds of the completion of this span, possibly absent if this a span is in-flight
-   * or incomplete. The critical path latency in microseconds of this operation is: {@code
-   * finishTimestamp - startTimestamp}.
+   * Measurement in microseconds of the critical path, if known. Durations of less than one
+   * microsecond must be rounded up to 1 microsecond.
    *
-   * <p>Since this type represents a span within a single host, care should be taken to not report
-   * an inaccurate timestamp. Typically, this is accomplished by using an offset from {@link
-   * #startTimestamp}, as this avoids problems of clocks, such as skew or NTP updates causing time
-   * to move backwards.
+   * <p>This value should be set directly, as opposed to implicitly via annotation timestamps. Doing
+   * so encourages precision decoupled from problems of clocks, such as skew or NTP updates causing
+   * time to move backwards.
    *
-   * @see #startTimestamp
+   * <p>For compatibility with instrumentation that precede this field, collectors or span stores
+   * can derive this by subtracting {@link Annotation#timestamp}. For example, {@link
+   * Constants#SERVER_SEND}.timestamp - {@link Constants#SERVER_RECV}.timestamp.
+   *
+   * <p>If this field is persisted as unset, zipkin will continue to work, except duration query
+   * support will be implementation-specific. Similarly, setting this field non-atomically is
+   * implementation-specific.
+   *
+   * <p>This field is i64 vs i32 to support spans longer than 35 minutes.
    */
-  @Nullable public abstract Long finishTimestamp();
+  @Nullable public abstract Long duration();
 
   /**
    * The host that recorded this span, primarily for query by service name.
@@ -165,8 +172,8 @@ public abstract class SimpleSpan implements Serializable { // for Spark jobs
     Long id;
     Kind kind;
     String name;
-    Long startTimestamp;
-    Long finishTimestamp;
+    Long timestamp;
+    Long duration;
     Endpoint localEndpoint;
     Endpoint remoteEndpoint;
     ArrayList<Annotation> annotations;
@@ -184,8 +191,8 @@ public abstract class SimpleSpan implements Serializable { // for Spark jobs
       id = null;
       kind = null;
       name = null;
-      startTimestamp = null;
-      finishTimestamp = null;
+      timestamp = null;
+      duration = null;
       localEndpoint = null;
       remoteEndpoint = null;
       if (annotations != null) annotations.clear();
@@ -203,8 +210,8 @@ public abstract class SimpleSpan implements Serializable { // for Spark jobs
       result.id = id;
       result.kind = kind;
       result.name = name;
-      result.startTimestamp = startTimestamp;
-      result.finishTimestamp = finishTimestamp;
+      result.timestamp = timestamp;
+      result.duration = duration;
       result.localEndpoint = localEndpoint;
       result.remoteEndpoint = remoteEndpoint;
       if (annotations != null) {
@@ -224,8 +231,8 @@ public abstract class SimpleSpan implements Serializable { // for Spark jobs
       id = source.id();
       kind = source.kind();
       name = source.name();
-      startTimestamp = source.startTimestamp();
-      finishTimestamp = source.finishTimestamp();
+      timestamp = source.timestamp();
+      duration = source.duration();
       localEndpoint = source.localEndpoint();
       remoteEndpoint = source.remoteEndpoint();
       if (!source.annotations().isEmpty()) {
@@ -310,17 +317,17 @@ public abstract class SimpleSpan implements Serializable { // for Spark jobs
       return this;
     }
 
-    /** @see SimpleSpan#startTimestamp */
-    public Builder startTimestamp(@Nullable Long startTimestamp) {
-      if (startTimestamp != null && startTimestamp == 0L) startTimestamp = null;
-      this.startTimestamp = startTimestamp;
+    /** @see SimpleSpan#timestamp */
+    public Builder timestamp(@Nullable Long timestamp) {
+      if (timestamp != null && timestamp == 0L) timestamp = null;
+      this.timestamp = timestamp;
       return this;
     }
 
-    /** @see SimpleSpan#finishTimestamp */
-    public Builder finishTimestamp(@Nullable Long finishTimestamp) {
-      if (finishTimestamp != null && finishTimestamp == 0L) finishTimestamp = null;
-      this.finishTimestamp = finishTimestamp;
+    /** @see SimpleSpan#duration */
+    public Builder duration(@Nullable Long duration) {
+      if (duration != null && duration == 0L) duration = null;
+      this.duration = duration;
       return this;
     }
 
@@ -370,8 +377,8 @@ public abstract class SimpleSpan implements Serializable { // for Spark jobs
         id,
         kind,
         name,
-        startTimestamp,
-        finishTimestamp,
+        timestamp,
+        duration,
         localEndpoint,
         remoteEndpoint,
         sortedList(annotations),

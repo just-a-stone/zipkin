@@ -43,8 +43,8 @@ public class SimpleSpanConverterTest {
       .kind(Kind.CLIENT)
       .localEndpoint(frontend)
       .remoteEndpoint(backend)
-      .startTimestamp(1472470996199000L)
-      .finishTimestamp(1472470996199000L + 207000L)
+      .timestamp(1472470996199000L)
+      .duration(207000L)
       .addAnnotation(1472470996238000L, Constants.WIRE_SEND)
       .addAnnotation(1472470996403000L, Constants.WIRE_RECV)
       .putTag(TraceKeys.HTTP_PATH, "/api")
@@ -82,8 +82,8 @@ public class SimpleSpanConverterTest {
       .name("get")
       .localEndpoint(frontend)
       .remoteEndpoint(backend)
-      .startTimestamp(1472470996199000L)
-      .finishTimestamp(1472470996199000L + 207000L)
+      .timestamp(1472470996199000L)
+      .duration(207000L)
       .build();
 
     Span span = Span.builder()
@@ -112,8 +112,8 @@ public class SimpleSpanConverterTest {
       .kind(Kind.CLIENT)
       .name("get")
       .localEndpoint(frontend)
-      .startTimestamp(1472470996199000L)
-      .finishTimestamp(1472470996199000L + 207000L)
+      .timestamp(1472470996199000L)
+      .duration(207000L)
       .build();
 
     Span span = Span.builder()
@@ -142,8 +142,8 @@ public class SimpleSpanConverterTest {
       .kind(Kind.SERVER)
       .localEndpoint(backend)
       .remoteEndpoint(frontend)
-      .startTimestamp(1472470996199000L)
-      .finishTimestamp(1472470996199000L + 207000L)
+      .timestamp(1472470996199000L)
+      .duration(207000L)
       .putTag(TraceKeys.HTTP_PATH, "/api")
       .putTag("clnt/finagle.version", "6.45.0")
       .build();
@@ -175,8 +175,8 @@ public class SimpleSpanConverterTest {
       .parentId(1L)
       .id(2L)
       .name("foo")
-      .startTimestamp(1472470996199000L)
-      .finishTimestamp(1472470996199000L + 207000L)
+      .timestamp(1472470996199000L)
+      .duration(207000L)
       .build();
 
     Span span = Span.builder()
@@ -200,8 +200,8 @@ public class SimpleSpanConverterTest {
       .parentId(1L)
       .id(2L)
       .name("foo")
-      .startTimestamp(1472470996199000L)
-      .finishTimestamp(1472470996199000L + 207000L)
+      .timestamp(1472470996199000L)
+      .duration(207000L)
       .addAnnotation(1472470996199000L, "sr")
       .build();
 
@@ -227,8 +227,8 @@ public class SimpleSpanConverterTest {
       .id(2L)
       .name("local")
       .localEndpoint(frontend)
-      .startTimestamp(1472470996199000L)
-      .finishTimestamp(1472470996199000L + 207000L)
+      .timestamp(1472470996199000L)
+      .duration(207000L)
       .build();
 
     Span local = Span.builder()
@@ -279,8 +279,8 @@ public class SimpleSpanConverterTest {
       .kind(Kind.CLIENT)
       .localEndpoint(frontend)
       .remoteEndpoint(backend)
-      .startTimestamp(1472470996199000L)
-      .finishTimestamp(1472470996199000L + 207000L)
+      .timestamp(1472470996199000L)
+      .duration(207000L)
       .addAnnotation(1472470996238000L, Constants.WIRE_SEND)
       .addAnnotation(1472470996403000L, Constants.WIRE_RECV)
       .putTag(TraceKeys.HTTP_PATH, "/api")
@@ -293,8 +293,8 @@ public class SimpleSpanConverterTest {
       .shared(true)
       .localEndpoint(backend)
       .remoteEndpoint(frontend)
-      .startTimestamp(1472470996250000L)
-      .finishTimestamp(1472470996350000L)
+      .timestamp(1472470996250000L)
+      .duration(100000L)
       .putTag(TraceKeys.HTTP_PATH, "/backend")
       .putTag("srv/finagle.version", "6.44.0")
       .build();
@@ -327,16 +327,16 @@ public class SimpleSpanConverterTest {
     SimpleSpan client = builder.clone()
       .kind(Kind.CLIENT)
       .localEndpoint(frontend)
-      .startTimestamp(1472470996199000L)
-      .finishTimestamp(1472470996199000L + 207000L)
+      .timestamp(1472470996199000L)
+      .duration(207000L)
       .build();
 
     SimpleSpan server = builder.clone()
       .kind(Kind.SERVER)
       .shared(true)
       .localEndpoint(frontend)
-      .startTimestamp(1472470996250000L)
-      .finishTimestamp(1472470996350000L)
+      .timestamp(1472470996250000L)
+      .duration(100000L)
       .build();
 
     assertThat(SimpleSpanConverter.fromSpan(shared))

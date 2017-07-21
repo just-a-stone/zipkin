@@ -92,7 +92,7 @@ public final class SimpleSpanConverter {
         }
 
         // the server side is smaller than that, we have to read annotations to find out
-        server.shared(true).startTimestamp(sr.timestamp).finishTimestamp(ss.timestamp);
+        server.shared(true).timestamp(sr.timestamp).duration(ss.timestamp - sr.timestamp);
       } else if (cs != null && cr != null) {
         maybeTimestampDuration(source, cs, cr);
       } else if (sr != null && ss != null) {
@@ -104,8 +104,7 @@ public final class SimpleSpanConverter {
         revertCoreAnnotation(source, cr);
 
         if (source.timestamp != null) {
-          SimpleSpan.Builder first = spans.get(0).startTimestamp(source.timestamp);
-          if (source.duration != null) first.finishTimestamp(source.timestamp + source.duration);
+          spans.get(0).timestamp(source.timestamp).duration(source.duration);
         }
       }
     }
@@ -118,9 +117,9 @@ public final class SimpleSpanConverter {
     void maybeTimestampDuration(Span source, Annotation begin, Annotation end) {
       SimpleSpan.Builder simple = forEndpoint(source, begin.endpoint);
       if (source.timestamp != null && source.duration != null) {
-        simple.startTimestamp(source.timestamp).finishTimestamp(source.timestamp + source.duration);
+        simple.timestamp(source.timestamp).duration(source.duration);
       } else {
-        simple.startTimestamp(begin.timestamp).finishTimestamp(end.timestamp);
+        simple.timestamp(begin.timestamp).duration(end.timestamp - begin.timestamp);
       }
     }
 
@@ -212,13 +211,11 @@ public final class SimpleSpanConverter {
       .debug(in.debug())
       .name(in.name() == null ? "" : in.name()); // avoid a NPE
 
-    long startTimestamp = in.startTimestamp() == null ? 0L : in.startTimestamp();
-    long finishTimestamp = in.finishTimestamp() == null ? 0L : in.finishTimestamp();
-    if (startTimestamp != 0L) {
-      result.timestamp(startTimestamp);
-      if (finishTimestamp != 0L && startTimestamp != finishTimestamp) {
-        result.duration(finishTimestamp - startTimestamp);
-      }
+    long timestamp = in.timestamp() == null ? 0L : in.timestamp();
+    long duration = in.duration() == null ? 0L : in.duration();
+    if (timestamp != 0L) {
+      result.timestamp(timestamp);
+      if (duration != 0L) result.duration(duration);
     }
 
     Annotation cs = null, sr = null, ss = null, cr = null;
@@ -228,20 +225,20 @@ public final class SimpleSpanConverter {
       switch (in.kind()) {
         case CLIENT:
           remoteEndpointType = Constants.SERVER_ADDR;
-          if (startTimestamp != 0L) {
-            cs = Annotation.create(startTimestamp, Constants.CLIENT_SEND, in.localEndpoint());
+          if (timestamp != 0L) {
+            cs = Annotation.create(timestamp, Constants.CLIENT_SEND, in.localEndpoint());
           }
-          if (finishTimestamp != 0L) {
-            cr = Annotation.create(finishTimestamp, Constants.CLIENT_RECV, in.localEndpoint());
+          if (duration != 0L) {
+            cr = Annotation.create(timestamp + duration, Constants.CLIENT_RECV, in.localEndpoint());
           }
           break;
         case SERVER:
           remoteEndpointType = Constants.CLIENT_ADDR;
-          if (startTimestamp != 0L) {
-            sr = Annotation.create(startTimestamp, Constants.SERVER_RECV, in.localEndpoint());
+          if (timestamp != 0L) {
+            sr = Annotation.create(timestamp, Constants.SERVER_RECV, in.localEndpoint());
           }
-          if (finishTimestamp != 0L) {
-            ss = Annotation.create(finishTimestamp, Constants.SERVER_SEND, in.localEndpoint());
+          if (duration != 0L) {
+            ss = Annotation.create(timestamp + duration, Constants.SERVER_SEND, in.localEndpoint());
           }
           break;
         default:
@@ -306,7 +303,7 @@ public final class SimpleSpanConverter {
     }
     // don't report client span.timestamp if unfinished.
     // This allows one-way to be modeled as span.kind(serverOrClient).start().flush()
-    if (cs != null && finishTimestamp == 0L) {
+    if (cs != null && duration == 0L) {
       result.timestamp(null);
     }
     if (in.localEndpoint() != null && !wroteEndpoint) { // create a dummy annotation

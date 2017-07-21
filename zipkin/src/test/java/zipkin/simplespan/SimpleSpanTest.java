@@ -88,13 +88,13 @@ public class SimpleSpanTest {
   /** Catches common error when zero is passed instead of null for a timestamp */
   @Test public void coercesZeroTimestampsToNull() {
     SimpleSpan span = base.toBuilder()
-      .startTimestamp(0L)
-      .finishTimestamp(0L)
+      .timestamp(0L)
+      .duration(0L)
       .build();
 
-    assertThat(span.startTimestamp())
+    assertThat(span.timestamp())
       .isNull();
-    assertThat(span.finishTimestamp())
+    assertThat(span.duration())
       .isNull();
   }
 
