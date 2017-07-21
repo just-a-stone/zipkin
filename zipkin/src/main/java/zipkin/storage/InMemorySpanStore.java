@@ -32,6 +32,8 @@ import zipkin.internal.GroupByTraceId;
 import zipkin.internal.MergeById;
 import zipkin.internal.Nullable;
 import zipkin.internal.Pair;
+import zipkin.simplespan.SimpleSpan;
+import zipkin.simplespan.SimpleSpanConverter;
 
 import static zipkin.internal.ApplyTimestampAndDuration.guessTimestamp;
 import static zipkin.internal.GroupByTraceId.TRACE_DESCENDING;
@@ -78,7 +80,7 @@ public final class InMemorySpanStore implements SpanStore {
    * weak reference and traceIdToTraceIdTimeStamps a strong one. In that case, deleting the trace ID
    * from traceIdToTraceIdTimeStamps would lead to a purge of spans at GC time.
    */
-  private final SortedMultimap<Pair<Long>, Span> spansByTraceIdTimeStamp =
+  private final SortedMultimap<Pair<Long>, SimpleSpan> spansByTraceIdTimeStamp =
       new LinkedListSortedMultimap<>(VALUE_2_DESCENDING);
 
   /** This supports span lookup by {@link zipkin.Span#traceId lower 64-bits of the trace ID} */
@@ -143,7 +145,7 @@ public final class InMemorySpanStore implements SpanStore {
       Pair<Long> traceIdTimeStamp =
         Pair.create(span.traceId, timestamp == null ? Long.MIN_VALUE : timestamp);
       String spanName = span.name;
-      spansByTraceIdTimeStamp.put(traceIdTimeStamp, span);
+      spansByTraceIdTimeStamp.put(traceIdTimeStamp, SimpleSpanConverter.fromSpan(span));
       traceIdToTraceIdTimeStamps.put(span.traceId, traceIdTimeStamp);
       acceptedSpanCount++;
 
@@ -173,7 +175,7 @@ public final class InMemorySpanStore implements SpanStore {
     for (Iterator<Pair<Long>> traceIdTimeStampIter = traceIdTimeStamps.iterator();
       traceIdTimeStampIter.hasNext(); ) {
       Pair<Long> traceIdTimeStamp = traceIdTimeStampIter.next();
-      Collection<Span> spans = spansByTraceIdTimeStamp.remove(traceIdTimeStamp);
+      Collection<SimpleSpan> spans = spansByTraceIdTimeStamp.remove(traceIdTimeStamp);
       spansEvicted += spans.size();
     }
     for (String orphanedService : serviceToTraceIds.removeServiceIfTraceId(traceId)) {
@@ -357,6 +359,14 @@ public final class InMemorySpanStore implements SpanStore {
       return size;
     }
 
+    void put(K key, List<V> values) {
+      Collection<V> valueContainer = delegate.get(key);
+      if (valueContainer == null) {
+        delegate.put(key, valueContainer = valueContainer());
+      }
+      if (valueContainer.addAll(values)) size += values.size();
+    }
+
     void put(K key, V value) {
       Collection<V> valueContainer = delegate.get(key);
       if (valueContainer == null) {
@@ -385,7 +395,9 @@ public final class InMemorySpanStore implements SpanStore {
   private Collection<Span> spansByTraceId(long traceId) {
     Collection<Span> sameTraceId = new ArrayList<>();
     for (Pair<Long> traceIdTimestamp : traceIdToTraceIdTimeStamps.get(traceId)) {
-      sameTraceId.addAll(spansByTraceIdTimeStamp.get(traceIdTimestamp));
+      for (SimpleSpan span : spansByTraceIdTimeStamp.get(traceIdTimestamp)) {
+        sameTraceId.add(SimpleSpanConverter.toSpan(span));
+      }
     }
     return sameTraceId;
   }
