@@ -197,8 +197,11 @@ public final class InMemorySpanStore implements SpanStore {
     return result;
   }
 
-  @Override
-  public synchronized List<List<Span>> getTraces(QueryRequest request) {
+  @Override public List<List<Span>> getTraces(QueryRequest request) {
+    return getTraces(request, strictTraceId);
+  }
+
+  synchronized List<List<Span>> getTraces(QueryRequest request, boolean strictTraceId) {
     Set<Long> traceIdsInTimerange = traceIdsDescendingByTimestamp(request);
     if (traceIdsInTimerange.isEmpty()) return Collections.emptyList();
 
@@ -283,7 +286,11 @@ public final class InMemorySpanStore implements SpanStore {
         .limit(Integer.MAX_VALUE).build();
 
     DependencyLinker linksBuilder = new DependencyLinker();
-    for (Collection<Span> trace : getTraces(request)) {
+
+    // We don't have a query parameter for strictTraceId when doing dependency linking, so we
+    // default to not strict. If looked up traces strictly, we might call putTrace twice for
+    // the same trace, which can lead to double-counting.
+    for (Collection<Span> trace : getTraces(request, /* strictTraceId */false)) {
       linksBuilder.putTrace(trace);
     }
     return linksBuilder.link();
